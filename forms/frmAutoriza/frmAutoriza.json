@@ -1,0 +1,157 @@
+{
+  "!type": "Form",
+  "HTML": null,
+  "attributes": "",
+  "background": "",
+  "backgroundimage": "",
+  "borderColor": "",
+  "borderStyle": "",
+  "borderWidth": "",
+  "cached_js": null,
+  "cached_js_script_hash": null,
+  "children": [
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Label1.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "LblFecha.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Label1Copy1.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Label1Copy1Copy.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "LblCaja.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "LblCajero.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Label1Copy1CopyCopy.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "LblSolicita.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "btnAutoriza.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "btnDeniega.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Image1.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "Label1Copy1Copy1.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmAutoriza",
+        "Elements",
+        "LblTienda.json"
+      ]
+    }
+  ],
+  "class": "",
+  "designHeight": 0,
+  "designWidth": 0,
+  "expanded_pmp": null,
+  "fullScreen": "true",
+  "height": 480,
+  "id": "frmAutoriza",
+  "language": "JavaScript",
+  "left": "",
+  "locked": false,
+  "modal": "false",
+  "onhide": "",
+  "onkeypress": "",
+  "onresize": "",
+  "onshow": "Form1.onshow()",
+  "openMode": "none",
+  "parentForm": "",
+  "position": "absolute",
+  "script": null,
+  "scroll_options": "mouseWheel:true, bounce:true, zoom:false",
+  "scrolling": "false",
+  "setFocusID": "",
+  "style": "",
+  "theme": "",
+  "top": "0",
+  "width": 320
+}
