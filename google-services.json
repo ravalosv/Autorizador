@@ -1,95 +1,26 @@
 {
   "project_info": {
-    "project_number": "1003914606111",
-    "firebase_url": "https://fcmappstudio.firebaseio.com",
-    "project_id": "fcmappstudio",
-    "storage_bucket": "fcmappstudio.appspot.com"
+    "project_number": "448764386668",
+    "project_id": "autorizador-remoto",
+    "storage_bucket": "autorizador-remoto.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1003914606111:android:7ba4a7c63875a770",
+        "mobilesdk_app_id": "1:448764386668:android:14aaa04a6d29add492e749",
         "android_client_info": {
-          "package_name": "ncautorizador.project"
+          "package_name": "com.novacaja.ncautorizador"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD9YNoM19pA-AXaN67QYHTPR9r0nFWUkPU"
+          "current_key": "AIzaSyAU06Q_vD22K0uGztgFRrtucydVRfh16_E"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1003914606111:android:56e48a418093cdbb",
-        "android_client_info": {
-          "package_name": "com.nsbasic.Project1"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD9YNoM19pA-AXaN67QYHTPR9r0nFWUkPU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1003914606111:android:a54833e75a8560df",
-        "android_client_info": {
-          "package_name": "fcmjs.project"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyD9YNoM19pA-AXaN67QYHTPR9r0nFWUkPU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1003914606111-lnd311s42192foien1lacbs6l5v54mfe.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

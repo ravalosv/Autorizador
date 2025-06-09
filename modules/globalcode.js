@@ -2,14 +2,85 @@
 var req;
 var imei1;
 var imei0;
-document.addEventListener("deviceready", onDeviceReady, False);
 
+// Variables globales para FCM
+var fcmToken = null;
+var lastNotification = null;
+
+document.addEventListener("deviceready", onDeviceReady, false);
 
 function onDeviceReady() {
-    //imei1=device.imei;
+  //imei1=device.imei;
+
+  // Inicializar FCM
+  if (typeof FCMPlugin !== "undefined") {
+    initializeFCM();
+  } else {
+    console.error("FCMPlugin no está disponible");
+  }
 }
 
+// Inicializar Firebase Cloud Messaging
+function initializeFCM() {
+  // Recuperar el token FCM
+  FCMPlugin.getToken(
+    function (token) {
+      console.log("FCM Token: " + token);
+      fcmToken = token;
+    },
+    function (error) {
+      console.error("Error al obtener token FCM: " + error);
+    }
+  );
 
+  // Configurar para escuchar las notificaciones
+  FCMPlugin.onNotification(
+    function (data) {
+      console.log("Notificación recibida: ", data);
+      lastNotification = data;
+
+      // Manejar la notificación según su contenido
+      handleNotification(data);
+    },
+    function (msg) {
+      console.log("onNotification callback successfully registered: " + msg);
+    },
+    function (err) {
+      console.error("Error registrando onNotification callback: " + err);
+    }
+  );
+
+  // Escuchar cambios en el token
+  FCMPlugin.onTokenRefresh(
+    function (token) {
+      console.log("Token actualizado: " + token);
+      fcmToken = token;
+    },
+    function (err) {
+      console.error("Error al refrescar token: " + err);
+    }
+  );
+}
+
+// Manejar la notificación recibida
+function handleNotification(data) {
+  // Verificar si la notificación es para autorizar algo
+  if (data && data.tipo === "autorizacion") {
+    // Si la app está en primer plano, mostrar un diálogo
+    if (data.wasTapped === false) {
+      NSB.MsgBox("Nueva solicitud de autorización recibida. ¿Desea revisarla ahora?", "Sí;No", "NCautorizador", function (btn) {
+        if (btn === "Sí") {
+          // Ir al formulario de autorización
+          ChangeForm(frmAutoriza);
+        }
+      });
+    } else {
+      // Si la app estaba en segundo plano y se abrió desde la notificación
+      // ir directamente al formulario de autorización
+      ChangeForm(frmAutoriza);
+    }
+  }
+}
 
 //********** hash *****************
 function sha1(str) {
@@ -22,7 +93,7 @@ function sha1(str) {
   //   example 1: sha1('Kevin van Zonneveld');
   //   returns 1: '54916d2e62f65b3afa6e192e6a601cdbe5cb5897'
 
-  var rotate_left = function(n, s) {
+  var rotate_left = function (n, s) {
     var t4 = (n << s) | (n >>> (32 - s));
     return t4;
   };
@@ -41,8 +112,8 @@ function sha1(str) {
     return str;
   };*/
 
-  var cvt_hex = function(val) {
-    var str = '';
+  var cvt_hex = function (val) {
+    var str = "";
     var i;
     var v;
 
@@ -57,10 +128,10 @@ function sha1(str) {
   var i, j;
   var W = new Array(80);
   var H0 = 0x67452301;
-  var H1 = 0xEFCDAB89;
-  var H2 = 0x98BADCFE;
+  var H1 = 0xefcdab89;
+  var H2 = 0x98badcfe;
   var H3 = 0x10325476;
-  var H4 = 0xC3D2E1F0;
+  var H4 = 0xc3d2e1f0;
   var A, B, C, D, E;
   var temp;
 
@@ -69,7 +140,7 @@ function sha1(str) {
 
   var word_array = [];
   for (i = 0; i < str_len - 3; i += 4) {
-    j = str.charCodeAt(i) << 24 | str.charCodeAt(i + 1) << 16 | str.charCodeAt(i + 2) << 8 | str.charCodeAt(i + 3);
+    j = (str.charCodeAt(i) << 24) | (str.charCodeAt(i + 1) << 16) | (str.charCodeAt(i + 2) << 8) | str.charCodeAt(i + 3);
     word_array.push(j);
   }
 
@@ -78,20 +149,19 @@ function sha1(str) {
       i = 0x080000000;
       break;
     case 1:
-      i = str.charCodeAt(str_len - 1) << 24 | 0x0800000;
+      i = (str.charCodeAt(str_len - 1) << 24) | 0x0800000;
       break;
     case 2:
-      i = str.charCodeAt(str_len - 2) << 24 | str.charCodeAt(str_len - 1) << 16 | 0x08000;
+      i = (str.charCodeAt(str_len - 2) << 24) | (str.charCodeAt(str_len - 1) << 16) | 0x08000;
       break;
     case 3:
-      i = str.charCodeAt(str_len - 3) << 24 | str.charCodeAt(str_len - 2) << 16 | str.charCodeAt(str_len - 1) <<
-        8 | 0x80;
+      i = (str.charCodeAt(str_len - 3) << 24) | (str.charCodeAt(str_len - 2) << 16) | (str.charCodeAt(str_len - 1) << 8) | 0x80;
       break;
   }
 
   word_array.push(i);
 
-  while ((word_array.length % 16) != 14) {
+  while (word_array.length % 16 != 14) {
     word_array.push(0);
   }
 
@@ -113,7 +183,7 @@ function sha1(str) {
     E = H4;
 
     for (i = 0; i <= 19; i++) {
-      temp = (rotate_left(A, 5) + ((B & C) | (~B & D)) + E + W[i] + 0x5A827999) & 0x0ffffffff;
+      temp = (rotate_left(A, 5) + ((B & C) | (~B & D)) + E + W[i] + 0x5a827999) & 0x0ffffffff;
       E = D;
       D = C;
       C = rotate_left(B, 30);
@@ -122,7 +192,7 @@ function sha1(str) {
     }
 
     for (i = 20; i <= 39; i++) {
-      temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0x6ED9EBA1) & 0x0ffffffff;
+      temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0x6ed9eba1) & 0x0ffffffff;
       E = D;
       D = C;
       C = rotate_left(B, 30);
@@ -131,7 +201,7 @@ function sha1(str) {
     }
 
     for (i = 40; i <= 59; i++) {
-      temp = (rotate_left(A, 5) + ((B & C) | (B & D) | (C & D)) + E + W[i] + 0x8F1BBCDC) & 0x0ffffffff;
+      temp = (rotate_left(A, 5) + ((B & C) | (B & D) | (C & D)) + E + W[i] + 0x8f1bbcdc) & 0x0ffffffff;
       E = D;
       D = C;
       C = rotate_left(B, 30);
@@ -140,7 +210,7 @@ function sha1(str) {
     }
 
     for (i = 60; i <= 79; i++) {
-      temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0xCA62C1D6) & 0x0ffffffff;
+      temp = (rotate_left(A, 5) + (B ^ C ^ D) + E + W[i] + 0xca62c1d6) & 0x0ffffffff;
       E = D;
       D = C;
       C = rotate_left(B, 30);
