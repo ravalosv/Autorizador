@@ -1,0 +1,1 @@
+Android format splash screen images.

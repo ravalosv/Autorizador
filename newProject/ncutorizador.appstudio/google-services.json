@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "448764386668",
+    "project_id": "autorizador-remoto",
+    "storage_bucket": "autorizador-remoto.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:448764386668:android:14aaa04a6d29add492e749",
+        "android_client_info": {
+          "package_name": "com.novacaja.ncautorizador"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAU06Q_vD22K0uGztgFRrtucydVRfh16_E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

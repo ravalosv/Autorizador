@@ -1,0 +1,85 @@
+{
+  "!type": "Form",
+  "HTML": null,
+  "attributes": "",
+  "background": "",
+  "backgroundimage": "",
+  "borderColor": "",
+  "borderStyle": "",
+  "borderWidth": "",
+  "cached_js": null,
+  "cached_js_script_hash": null,
+  "children": [
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmBaja",
+        "Elements",
+        "Image1CopyCopyCopy.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmBaja",
+        "Elements",
+        "Label1Copy2.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmBaja",
+        "Elements",
+        "Checkbox1.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmBaja",
+        "Elements",
+        "btnContinuarBaja.json"
+      ]
+    },
+    {
+      "!type": "External",
+      "file": [
+        "forms",
+        "frmBaja",
+        "Elements",
+        "btnRegresar.json"
+      ]
+    }
+  ],
+  "class": "",
+  "designHeight": 0,
+  "designWidth": 0,
+  "expanded_pmp": null,
+  "fullScreen": "true",
+  "height": 480,
+  "id": "frmBaja",
+  "language": "JavaScript",
+  "left": "0",
+  "locked": false,
+  "modal": "false",
+  "onhide": "",
+  "onkeypress": "",
+  "onresize": "",
+  "onshow": "frmBaja.onshow()",
+  "openMode": "none",
+  "parentForm": "",
+  "position": "absolute",
+  "script": null,
+  "scroll_options": "mouseWheel:true, bounce:true, zoom:false",
+  "scrolling": "false",
+  "setFocusID": "",
+  "style": "",
+  "theme": "",
+  "top": "0",
+  "width": 320
+}
