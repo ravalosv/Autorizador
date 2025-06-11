@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget 
-xmlns = "https://www.w3.org/ns/widgets"
+xmlns="https://www.w3.org/ns/widgets"
 xmlns:gap = "http://phonegap.com/ns/1.0"
 id = "com.novacaja.ncautorizador"
 versionCode = "1"
@@ -11,7 +11,7 @@ version = "{version}">
 <preference name="phonegap-version" value="{phoneGapVersion}" />
 
 <!-- Icons -->
-<icon src='{icon}' />
+<icon src='resources/iconTemplate.png' />
 
 <platform name = 'android'>
     <icon src='icons/android/ldpi.png' platform='android' qualifier='ldpi' />

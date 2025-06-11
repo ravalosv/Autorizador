@@ -1,136 +1,210 @@
-var respuesta3 = "";
+// Variables globales
+var respuesta3 = '';
 var req3;
+let firebaseInitialized = false;
+let messaging = null;
 
-Form3.onshow = function () {
-  // Verificar si hay alguna autorización pendiente al abrir el formulario
-  // Esto ocurre cuando se abre la app o cuando se vuelve a este formulario
-
-  // Si hay una notificación reciente que no se ha manejado
-  if (lastNotification && lastNotification.tipo === "autorizacion" && lastNotification.pendiente === true) {
-    // Limpiar la notificación para no procesarla nuevamente
-    lastNotification = null;
-
-    // Ir al formulario de autorización
-    ChangeForm(frmAutoriza);
-    return;
-  }
-
-  // Si no hay notificación pendiente, verificar con el servidor
-  window.plugins.imei.get(
-    async function (imei) {
-      imei0 = imei;
-      senddata3("?servicio=e&imei=" + imei0);
-    },
-    async function () {
-      NSB.MsgBox("Error leyendo IMEI", 0, "NCautorizador");
-    }
-  );
+// Configuración de Firebase
+const firebaseConfig = {
+    apiKey: 'AIzaSyCPvhFLHzX6Mx3Cvjf6Zq3hbY8UI7iG79s',
+    authDomain: 'autorizador-remoto.firebaseapp.com',
+    projectId: 'autorizador-remoto',
+    storageBucket: 'autorizador-remoto.firebasestorage.app',
+    messagingSenderId: '448764386668',
+    appId: '1:448764386668:web:02936cf72552a61d92e749',
+    measurementId: 'G-K1H627GTPT',
 };
 
-//******** envío de datos *********
+const VAPID_KEY = 'BJuerWdNW1PbCWwmIKJ3u-fp0qvtIh8jXONtvvqEwfECDMmfM0RQJczOnNleyCdGHptjAs-YhkXQtrfu-jP9uAA';
 
+// Función para cargar scripts de Firebase
+async function loadFirebaseScripts() {
+    if (typeof firebase !== 'undefined') return;
+    
+    try {
+        await Promise.all([
+            $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js'),
+            $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js')
+        ]);
+        console.log('Scripts de Firebase cargados correctamente');
+    } catch (error) {
+        console.error('Error cargando scripts de Firebase:', error);
+        throw new Error('No se pudieron cargar los scripts de Firebase');
+    }
+}
+
+// Función para inicializar Firebase
+async function initializeFirebase() {
+    if (firebaseInitialized) {
+        console.log('Firebase ya está inicializado');
+        return;
+    }
+
+    try {
+        console.log('Iniciando inicialización de Firebase...');
+        
+        // 1. Cargar scripts
+        await loadFirebaseScripts();
+
+        // 2. Inicializar Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // 3. Inicializar servicios
+        //window.analytics = firebase.analytics();
+        messaging = firebase.messaging();
+
+        firebaseInitialized = true;
+        console.log('Firebase inicializado correctamente');
+
+    } catch (error) {
+        console.error('Error en initializeFirebase:', error);
+        firebaseInitialized = false;
+        throw error;
+    }
+}
+
+// Función para configurar el Service Worker
+async function setupServiceWorker() {
+    if (!('serviceWorker' in navigator)) {
+        throw new Error('Service Worker no soportado en este navegador');
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
+            scope: './'
+        });
+        console.log('Service Worker registrado:', registration);
+        return registration;
+    } catch (error) {
+        console.error('Error registrando Service Worker:', error);
+        throw error;
+    }
+}
+
+// Función para configurar notificaciones
+async function setupNotifications(swRegistration) {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            throw new Error('Permiso de notificación denegado');
+        }
+
+        const token = await messaging.getToken({
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: swRegistration
+        });
+
+        if (!token) {
+            throw new Error('No se pudo obtener el token FCM');
+        }
+
+        console.log('Token FCM:', token);
+        return token;
+
+    } catch (error) {
+        console.error('Error en setupNotifications:', error);
+        throw error;
+    }
+}
+
+// Configurar manejo de mensajes
+function setupMessageHandling() {
+    messaging.onMessage((payload) => {
+        console.log('Mensaje recibido en primer plano:', payload);
+        if (Notification.permission === 'granted') {
+            const { title, body, icon } = payload.notification;
+            new Notification(title, { body, icon });
+        }
+    });
+}
+
+// Función principal de inicialización
+async function initializeApp() {
+    try {
+        await initializeFirebase();
+        const swRegistration = await setupServiceWorker();
+        const token = await setupNotifications(swRegistration);
+        setupMessageHandling();
+        return token;
+    } catch (error) {
+        console.error('Error en initializeApp:', error);
+        throw error;
+    }
+}
+
+// Eventos del formulario
+Form3.onshow = function() {
+    console.log('Form3.onshow iniciando...');
+    let initializationAttempted = false;
+
+    (async () => {
+        try {
+            if (!firebaseInitialized && !initializationAttempted) {
+                initializationAttempted = true;
+                const token = await initializeApp();
+                console.log('Inicialización completada. Token:', token);
+            }
+        } catch (error) {
+            console.error('Error en Form3.onshow:', error);
+            NSB.MsgBox('Error: ' + error.message, 0, 'NCautorizador');
+        }
+    })();
+};
+
+// Funciones AJAX
 function senddata3(valor) {
-  req3 = Ajax("http://novacaja.com/autorizador/auto4.php" + valor, done3);
+    req3 = Ajax('http://novacaja.com/autorizador/auto4.php' + valor, done3);
 }
 
 function done3() {
-  if (req3.readyState != 4) {
-    return;
-  }
+    if (req3.readyState !== 4) return;
 
-  if (req3.status == 200) {
-    //success
-    respuesta3 = req3.responseText;
-
-    //alert ("respuesta3=" + respuesta3);
-
-    if (respuesta3 == "1") {
-      ChangeForm(frmAutoriza);
+    if (req3.status === 200) {
+        respuesta3 = req3.responseText;
+        if (respuesta3 === '1') {
+            ChangeForm(frmAutoriza);
+        } else if (respuesta3 === '0') {
+            ChangeForm(frmSuscribe);
+        }
     } else {
-      if (respuesta3 == "0") {
-        ChangeForm(frmSuscribe);
-      }
+        const msg = buildErrorMessage(req3);
+        respuesta = msg;
+        Label2.value = msg;
     }
-  } else {
-    //failure
-    msg = "Error: Status = " + req3.status;
-    if (TypeName(req3.statusText) == "string") {
-      msg = msg + " " + req3.statusText;
-    }
-    if (TypeName(req3.err) == "string") {
-      msg = msg + " " + req3.error;
-    }
-    respuesta = msg;
-    Label2.value = msg;
-  }
 }
 
-btnContinuar.onclick = function () {
-  window.plugins.imei.get(
-    async function (imei) {
-      imei0 = imei;
-      senddata3("?servicio=e&imei=" + imei0);
-    },
-    async function () {
-      NSB.MsgBox("error leyendo imei", 0, "NCautorizador");
+function buildErrorMessage(request) {
+    let msg = `Error: Status = ${request.status}`;
+    if (TypeName(request.statusText) === 'string') {
+        msg += ` ${request.statusText}`;
     }
-  );
+    if (TypeName(request.err) === 'string') {
+        msg += ` ${request.error}`;
+    }
+    return msg;
+}
+
+// Event Handlers
+btnContinuar.onclick = function() {
+    window.plugins.imei.get(
+        async (imei) => {
+            senddata3('?servicio=e&imei=' + imei);
+        },
+        async () => {
+            NSB.MsgBox('error leyendo imei', 0, 'NCautorizador');
+        }
+    );
 };
 
-btnBaja.onclick = function () {
-  window.plugins.imei.get(
-    async function (imei) {
-      imei0 = imei;
-      senddata3a("?servicio=e&imei=" + imei0);
-    },
-    async function () {
-      NSB.MsgBox("error leyendo imei", 0, "NCautorizador");
-    }
-  );
-};
-
-function senddata3a(valor) {
-  req3a = Ajax("http://novacaja.com/autorizador/auto4.php" + valor, done3a);
-}
-
-function done3a() {
-  if (req3a.readyState != 4) {
-    return;
-  }
-
-  if (req3a.status == 200) {
-    //success
-    respuesta3a = req3a.responseText;
-
-    //alert ("respuesta3=" + respuesta3);
-
-    if (respuesta3a == "1") {
-      ChangeForm(frmBaja);
-    } else {
-      NSB.MsgBox("No hay temas para este teléfono", 0, "NCautorizador");
-    }
-  } else {
-    //failure
-    msg = "Error: Status = " + req3a.status;
-    if (TypeName(req3a.statusText) == "string") {
-      msg = msg + " " + req3a.statusText;
-    }
-    if (TypeName(req3a.err) == "string") {
-      msg = msg + " " + req3a.error;
-    }
-    respuesta = msg;
-    Label2.value = msg;
-  }
-}
-
-btnSuscribe1.onclick = function () {
-  window.plugins.imei.get(
-    async function (imei) {
-      imei0 = imei;
-      ChangeForm(frmSuscribe);
-    },
-    async function () {
-      NSB.MsgBox("error leyendo imei", 0, "NCautorizador");
-    }
-  );
+btnBaja.onclick = function() {
+    window.plugins.imei.get(
+        async (imei) => {
+            senddata3('?servicio=e&imei=' + imei);
+        },
+        async () => {
+            NSB.MsgBox('error leyendo imei', 0, 'NCautorizador');
+        }
+    );
 };

@@ -1,23 +1,24 @@
 {
-  "short_name": "ncutorizador",
-  "name": "ncutorizador",
-  "description": "ncutorizador",
-  "display": "standalone",
-  "start_url": "index.html",
-  "background_color": "black",
-  "theme_color": "black",
-  "icons": [
-    {
-      "src": "nsb/images/72.png",
-      "sizes": "72x72"
-    },
-    {
-      "src": "nsb/images/192.png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "nsb/images/512.png",
-      "sizes": "512x512"
-    }
-  ]
+	"short_name": "ncutorizador",
+	"name": "ncutorizador",
+	"description": "ncutorizador",
+	"display": "standalone",
+	"start_url": "index.html",
+	"background_color": "black",
+	"theme_color": "black",
+	"gcm_sender_id": "448764386668",
+	"icons": [
+		{
+			"src": "nsb/images/72.png",
+			"sizes": "72x72"
+		},
+		{
+			"src": "nsb/images/192.png",
+			"sizes": "192x192"
+		},
+		{
+			"src": "nsb/images/512.png",
+			"sizes": "512x512"
+		}
+	]
 }
