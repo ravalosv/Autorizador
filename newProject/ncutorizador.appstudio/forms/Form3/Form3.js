@@ -8,6 +8,17 @@ let retryCount = 0;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 segundos
 
+// Desregistrar cualquier Service Worker previo
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    for (let registration of registrations) {
+      console.log('[App] Desregistrando Service Worker:', registration);
+      registration.unregister();
+    }
+  });
+}
+
+
 // Configuración de Firebase
 const firebaseConfig = {
     apiKey: 'AIzaSyCPvhFLHzX6Mx3Cvjf6Zq3hbY8UI7iG79s',
@@ -86,46 +97,45 @@ async function initializeFirebase() {
 
 // Función para configurar el Service Worker con verificación
 async function setupServiceWorker() {
+  console.log('Intentando registrar Service Worker...');
+  try {
     if (!('serviceWorker' in navigator)) {
-        throw new Error('Service Worker no soportado en este navegador');
+      throw new Error('Service Worker no soportado en este navegador');
     }
 
-    // Verificar si ya existe un Service Worker activo
-    const existingRegistration = await navigator.serviceWorker.getRegistration();
-    if (existingRegistration?.active) {
-        console.log('Service Worker ya está activo');
-        return existingRegistration;
+    
+
+    // Primero, desregistrar cualquier SW existente
+    const existingRegistrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of existingRegistrations) {
+      await registration.unregister();
+      console.log('Service Worker anterior desregistrado');
     }
 
-    try {
-        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
-            scope: './'
-        });
+    // Registrar el nuevo SW
+    const registration = await navigator.serviceWorker.register(
+      './firebase-messaging-sw.js',
+      { scope: './' }
+    );
 
-        // Esperar a que el Service Worker esté activo
-        if (registration.installing) {
-            await new Promise((resolve) => {
-                registration.installing.addEventListener('statechange', (e) => {
-                    if (e.target.state === 'activated') {
-                        resolve();
-                    }
-                });
-            });
-        }
+    console.log('Service Worker registrado:', registration);
+    console.log('Estado:', registration.installing ? 'instalando' : registration.waiting ? 'esperando' : 'activo');
 
-        console.log('Service Worker registrado y activado:', registration);
-        return registration;
-    } catch (error) {
-        console.error('Error registrando Service Worker:', error);
-        throw error;
-    }
+    return registration;
+  } catch (error) {
+    console.error('Error en setupServiceWorker:', error);
+    throw error;
+  }
 }
+
 
 // Función para configurar notificaciones con retry
 async function setupNotifications(swRegistration) {
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
             const permission = await Notification.requestPermission();
+            console.log('Estado del permiso de notificaciones:', permission);
+
             if (permission !== 'granted') {
                 throw new Error('Permiso de notificación denegado');
             }
@@ -140,6 +150,7 @@ async function setupNotifications(swRegistration) {
             }
 
             console.log('Token FCM obtenido correctamente');
+            console.log('token: ', token);
             
             return token;
         } catch (error) {
@@ -155,23 +166,25 @@ async function setupNotifications(swRegistration) {
 
 // Configurar manejo de mensajes con verificación de estado
 function setupMessageHandling() {
-    console.log('inicializando setupMessageHandling');
-    console.log('messaging:', messaging);
-  
-    if (!messaging) {
-        console.error('Messaging no está inicializado');
-        return;
-    }
+  if (!messaging) {
+    console.error('Messaging no está inicializado');
+    return;
+  }
 
-    messaging.onMessage((payload) => {
-        console.log('Mensaje recibido en primer plano:', payload);
-        if (Notification.permission === 'granted') {
-            const { title, body, icon } = payload.notification || {};
-            if (title) {
-                new Notification(title, { body, icon });
-            }
-        }
-    });
+  // Añadir manejo básico de mensajes en primer plano
+  messaging.onMessage((payload) => {
+    console.log('Mensaje recibido en primer plano:', payload);
+    
+    if (Notification.permission === 'granted') {
+      const notificationTitle = payload.notification?.title || 'Nueva Notificación';
+      const notificationOptions = {
+        body: payload.notification?.body || ''
+        //icon: payload.notification?.icon || '/icon.png'
+      };
+
+      new Notification(notificationTitle, notificationOptions);
+    }
+  });
 }
 
 // Función principal de inicialización con control de estado
@@ -194,23 +207,23 @@ async function initializeApp() {
 }
 
 // Eventos del formulario con control de reintentos
-Form3.onshow = function() {
-    console.log('Form3.onshow iniciando...');
-    let initAttempted = false;
+Form3.onshow = function () {
+  console.log('Form3.onshow iniciando...');
+  let initAttempted = false;
 
-    (async () => {
-        if (!firebaseInitialized && !initAttempted) {
-            initAttempted = true;
-            try {
-                const token = await initializeApp();
-                console.log('Inicialización completada exitosamente');
-                console.log('Token: ', token);
-            } catch (error) {
-                console.error('Error en Form3.onshow:', error);
-                NSB.MsgBox('Error: ' + error.message, 0, 'NCautorizador');
-            }
-        }
-    })();
+  (async () => {
+    if (!firebaseInitialized && !initAttempted) {
+      initAttempted = true;
+      try {
+        const token = await initializeApp();
+        console.log('Inicialización completada exitosamente');
+        console.log('Token: ', token);
+      } catch (error) {
+        console.error('Error en Form3.onshow:', error);
+        NSB.MsgBox('Error: ' + error.message, 0, 'NCautorizador');
+      }
+    }
+  })();
 };
 
 // Funciones AJAX
@@ -268,3 +281,21 @@ btnBaja.onclick = function() {
         }
     );
 };
+
+
+
+/*
+// Esperar a que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', function () {
+  // Buscar el elemento <script> con src="firebase-messaging-sw.js"
+  const scriptToRemove = document.querySelector('script[src="firebase-messaging-sw.js"]');
+
+  if (scriptToRemove) {
+    console.log('[App] Eliminando script firebase-messaging-sw.js del HTML');
+    // Eliminar el script del DOM
+    scriptToRemove.remove();
+  } else {
+    console.warn('[App] No se encontró el script firebase-messaging-sw.js en el HTML');
+  }
+});
+*/
