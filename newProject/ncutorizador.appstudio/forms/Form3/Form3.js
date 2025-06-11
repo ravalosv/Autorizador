@@ -3,6 +3,10 @@ var respuesta3 = '';
 var req3;
 let firebaseInitialized = false;
 let messaging = null;
+let initializationInProgress = false;
+let retryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000; // 2 segundos
 
 // Configuración de Firebase
 const firebaseConfig = {
@@ -17,65 +21,99 @@ const firebaseConfig = {
 
 const VAPID_KEY = 'BJuerWdNW1PbCWwmIKJ3u-fp0qvtIh8jXONtvvqEwfECDMmfM0RQJczOnNleyCdGHptjAs-YhkXQtrfu-jP9uAA';
 
-// Función para cargar scripts de Firebase
+// Función para esperar un tiempo determinado
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Función para cargar scripts de Firebase con retry
 async function loadFirebaseScripts() {
-    if (typeof firebase !== 'undefined') return;
-    
-    try {
-        await Promise.all([
-            $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js'),
-            $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js')
-        ]);
-        console.log('Scripts de Firebase cargados correctamente');
-    } catch (error) {
-        console.error('Error cargando scripts de Firebase:', error);
-        throw new Error('No se pudieron cargar los scripts de Firebase');
+    if (typeof firebase !== 'undefined') {
+        console.log('Firebase ya está cargado');
+        return;
+    }
+
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            await Promise.all([
+                $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js'),
+                $.getScript('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js')
+            ]);
+            console.log('Scripts de Firebase cargados correctamente');
+            return;
+        } catch (error) {
+            console.warn(`Intento ${i + 1}/${MAX_RETRIES} fallido:`, error);
+            if (i < MAX_RETRIES - 1) {
+                await delay(RETRY_DELAY);
+            } else {
+                throw new Error('No se pudieron cargar los scripts de Firebase después de varios intentos');
+            }
+        }
     }
 }
 
-// Función para inicializar Firebase
+// Función para inicializar Firebase con control de estado
 async function initializeFirebase() {
     if (firebaseInitialized) {
         console.log('Firebase ya está inicializado');
         return;
     }
 
+    if (initializationInProgress) {
+        console.log('Inicialización de Firebase en progreso...');
+        return;
+    }
+
+    initializationInProgress = true;
+
     try {
         console.log('Iniciando inicialización de Firebase...');
-        
-        // 1. Cargar scripts
         await loadFirebaseScripts();
 
-        // 2. Inicializar Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
 
-        // 3. Inicializar servicios
-        //window.analytics = firebase.analytics();
         messaging = firebase.messaging();
-
         firebaseInitialized = true;
         console.log('Firebase inicializado correctamente');
-
     } catch (error) {
         console.error('Error en initializeFirebase:', error);
         firebaseInitialized = false;
         throw error;
+    } finally {
+        initializationInProgress = false;
     }
 }
 
-// Función para configurar el Service Worker
+// Función para configurar el Service Worker con verificación
 async function setupServiceWorker() {
     if (!('serviceWorker' in navigator)) {
         throw new Error('Service Worker no soportado en este navegador');
+    }
+
+    // Verificar si ya existe un Service Worker activo
+    const existingRegistration = await navigator.serviceWorker.getRegistration();
+    if (existingRegistration?.active) {
+        console.log('Service Worker ya está activo');
+        return existingRegistration;
     }
 
     try {
         const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js', {
             scope: './'
         });
-        console.log('Service Worker registrado:', registration);
+
+        // Esperar a que el Service Worker esté activo
+        if (registration.installing) {
+            await new Promise((resolve) => {
+                registration.installing.addEventListener('statechange', (e) => {
+                    if (e.target.state === 'activated') {
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        console.log('Service Worker registrado y activado:', registration);
         return registration;
     } catch (error) {
         console.error('Error registrando Service Worker:', error);
@@ -83,45 +121,66 @@ async function setupServiceWorker() {
     }
 }
 
-// Función para configurar notificaciones
+// Función para configurar notificaciones con retry
 async function setupNotifications(swRegistration) {
-    try {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-            throw new Error('Permiso de notificación denegado');
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                throw new Error('Permiso de notificación denegado');
+            }
+
+            const token = await messaging.getToken({
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: swRegistration
+            });
+
+            if (!token) {
+                throw new Error('No se pudo obtener el token FCM');
+            }
+
+            console.log('Token FCM obtenido correctamente');
+            
+            return token;
+        } catch (error) {
+            console.warn(`Intento ${i + 1}/${MAX_RETRIES} fallido:`, error);
+            if (i < MAX_RETRIES - 1) {
+                await delay(RETRY_DELAY);
+            } else {
+                throw error;
+            }
         }
-
-        const token = await messaging.getToken({
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: swRegistration
-        });
-
-        if (!token) {
-            throw new Error('No se pudo obtener el token FCM');
-        }
-
-        console.log('Token FCM:', token);
-        return token;
-
-    } catch (error) {
-        console.error('Error en setupNotifications:', error);
-        throw error;
     }
 }
 
-// Configurar manejo de mensajes
+// Configurar manejo de mensajes con verificación de estado
 function setupMessageHandling() {
+    console.log('inicializando setupMessageHandling');
+    console.log('messaging:', messaging);
+  
+    if (!messaging) {
+        console.error('Messaging no está inicializado');
+        return;
+    }
+
     messaging.onMessage((payload) => {
         console.log('Mensaje recibido en primer plano:', payload);
         if (Notification.permission === 'granted') {
-            const { title, body, icon } = payload.notification;
-            new Notification(title, { body, icon });
+            const { title, body, icon } = payload.notification || {};
+            if (title) {
+                new Notification(title, { body, icon });
+            }
         }
     });
 }
 
-// Función principal de inicialización
+// Función principal de inicialización con control de estado
 async function initializeApp() {
+    if (initializationInProgress) {
+        console.log('Inicialización ya en progreso...');
+        return;
+    }
+
     try {
         await initializeFirebase();
         const swRegistration = await setupServiceWorker();
@@ -134,21 +193,22 @@ async function initializeApp() {
     }
 }
 
-// Eventos del formulario
+// Eventos del formulario con control de reintentos
 Form3.onshow = function() {
     console.log('Form3.onshow iniciando...');
-    let initializationAttempted = false;
+    let initAttempted = false;
 
     (async () => {
-        try {
-            if (!firebaseInitialized && !initializationAttempted) {
-                initializationAttempted = true;
+        if (!firebaseInitialized && !initAttempted) {
+            initAttempted = true;
+            try {
                 const token = await initializeApp();
-                console.log('Inicialización completada. Token:', token);
+                console.log('Inicialización completada exitosamente');
+                console.log('Token: ', token);
+            } catch (error) {
+                console.error('Error en Form3.onshow:', error);
+                NSB.MsgBox('Error: ' + error.message, 0, 'NCautorizador');
             }
-        } catch (error) {
-            console.error('Error en Form3.onshow:', error);
-            NSB.MsgBox('Error: ' + error.message, 0, 'NCautorizador');
         }
     })();
 };
